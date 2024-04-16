@@ -1,6 +1,13 @@
 <script setup lang="ts">
+definePageMeta({
+  middleware: ["guest"],
+});
+
 import { z } from "zod";
 import type { FormSubmitEvent } from "#ui/types";
+import { FetchError } from "ofetch";
+
+const { login } = useAuth();
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -12,11 +19,27 @@ type Schema = z.output<typeof schema>;
 const state = reactive({
   email: undefined,
   password: undefined,
+  error: "",
+  pending: false,
 });
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  const body = await $fetch("/api/login", { method: "POST", body: event.data });
-  console.log(body);
+  state.error = "";
+  state.pending = true;
+
+  try {
+    await login(event.data.email, event.data.password);
+    navigateTo("/profile");
+  } catch (e) {
+    state.pending = false;
+    if (e instanceof FetchError) {
+      if (e.status === 401) {
+        state.error = "Wrong email or password";
+        return;
+      }
+    }
+    state.error = "Error during login";
+  }
 }
 </script>
 
@@ -37,8 +60,16 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <UInput v-model="state.password" type="password" />
         </UFormGroup>
 
-        <UButton type="submit"> Submit </UButton>
+        <UButton :disabled="state.pending" type="submit"> Submit </UButton>
       </UForm>
+      <UAlert
+        v-if="state.error"
+        class="mt-4"
+        color="red"
+        variant="outline"
+        title="Error"
+        :description="state.error"
+      />
     </UCard>
   </UContainer>
 </template>

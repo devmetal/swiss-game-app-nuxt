@@ -1,10 +1,19 @@
+export type LoginResponse = {
+  token: string;
+};
+
 export default defineEventHandler(async (event) => {
   const reqBody = await readBody(event);
 
-  const resp = await $fetch("http://localhost:8000/api/auth/login", {
-    method: "POST",
-    body: reqBody,
-  });
+  const { token } = await $fetch<LoginResponse>(
+    "http://localhost:8000/api/auth/login",
+    {
+      method: "POST",
+      body: reqBody,
+    }
+  );
 
-  return resp;
+  setCookie(event, "token", token, { httpOnly: true });
+
+  return token;
 });

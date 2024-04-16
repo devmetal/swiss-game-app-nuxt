@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import type { HorizontalNavigationLink } from "#ui/types";
 
-const links: HorizontalNavigationLink[] = [
+const user = useAuthUser();
+const { logout } = useAuth();
+
+async function handleLogout() {
+  await logout();
+  navigateTo("/");
+}
+
+const guestLinks: HorizontalNavigationLink[] = [
   {
     label: "Home",
     icon: "i-heroicons-home",
@@ -12,12 +20,31 @@ const links: HorizontalNavigationLink[] = [
     icon: "i-heroicons-arrow-right-circle",
     to: "/login",
   },
-  {
-    label: "Profile",
-    icon: "i-heroicons-user-circle",
-    to: "/profile",
-  },
 ];
+
+const userLinks: HorizontalNavigationLink[][] = [
+  [
+    {
+      label: "Home",
+      icon: "i-heroicons-home",
+      to: "/",
+    },
+    {
+      label: "Profile",
+      icon: "i-heroicons-user-circle",
+      to: "/profile",
+    },
+  ],
+  [
+    {
+      label: "Logout",
+      icon: "i-heroicons-arrow-left-end-on-rectangle",
+      click: handleLogout,
+    },
+  ],
+];
+
+const links = computed(() => (user.value ? userLinks : guestLinks));
 </script>
 
 <template>
